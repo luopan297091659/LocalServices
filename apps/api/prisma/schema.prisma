@@ -1,0 +1,402 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MERCHANT_ADMIN
+  MERCHANT_STAFF
+  CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum MerchantStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  REJECTED
+  SUSPENDED
+  CLOSED
+}
+
+enum EntityType {
+  INDIVIDUAL
+  SOLE_PROPRIETOR
+  CORPORATION
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  SUSPENDED
+}
+
+enum PriceType {
+  FIXED
+  START_FROM
+  RANGE
+  NEGOTIABLE
+  HOURLY
+  DAILY
+  PER_TIME
+  PER_PERSON
+  PER_ROOM
+  CUSTOM
+}
+
+enum MediaBizType {
+  MERCHANT
+  SERVICE
+  PRODUCT
+  MESSAGE
+  VERIFICATION
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum FavoriteType {
+  MERCHANT
+  SERVICE
+  PRODUCT
+}
+
+enum ConversationStatus {
+  ACTIVE
+  CLOSED
+  BLOCKED
+}
+
+enum MessageSenderType {
+  CUSTOMER
+  MERCHANT
+  SYSTEM
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  SERVICE
+  PRODUCT
+}
+
+model User {
+  id               String           @id @default(cuid())
+  email            String?          @unique
+  phone            String?          @unique
+  passwordHash     String
+  refreshTokenHash String?
+  nickname         String?
+  avatarUrl        String?
+  locale           String           @default("ja-JP")
+  role             UserRole         @default(CUSTOMER)
+  status           UserStatus       @default(ACTIVE)
+  merchantMembers  MerchantMember[]
+  favorites        Favorite[]
+  conversations    Conversation[]
+  messages         Message[]
+  auditLogs        AuditLog[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+model Prefecture {
+  id        Int            @id
+  code      String         @unique
+  nameJa    String
+  nameEn    String?
+  sort      Int
+  cities    Municipality[]
+}
+
+model Municipality {
+  id           String     @id
+  prefectureId Int
+  code         String     @unique
+  nameJa       String
+  nameKana     String?
+  prefecture   Prefecture @relation(fields: [prefectureId], references: [id])
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  parentId  String?
+  nameJa    String
+  nameKana  String?
+  nameEn    String?
+  icon      String?
+  sort      Int        @default(0)
+  enabled   Boolean    @default(true)
+  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryTree")
+  merchants MerchantCategory[]
+  services  Service[]
+  products  Product[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Merchant {
+  id                 String                 @id @default(cuid())
+  nameJa             String
+  nameKana           String?
+  nameEn             String?
+  slug               String?                @unique
+  logoUrl            String?
+  coverUrl           String?
+  descriptionJa      String?
+  shortDescriptionJa String?
+  phone              String?
+  email              String?
+  website            String?
+  lineUrl            String?
+  instagramUrl       String?
+  status             MerchantStatus         @default(DRAFT)
+  rating             Decimal                @default(0) @db.Decimal(2, 1)
+  reviewCount        Int                    @default(0)
+  viewCount          Int                    @default(0)
+  consultCount       Int                    @default(0)
+  favoriteCount      Int                    @default(0)
+  address            MerchantAddress?
+  businessHours      MerchantBusinessHour[]
+  specialHours       MerchantSpecialHour[]
+  categories         MerchantCategory[]
+  members            MerchantMember[]
+  services           Service[]
+  products           Product[]
+  media              MediaFile[]
+  verifications      MerchantVerification[]
+  conversations      Conversation[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+}
+
+model MerchantMember {
+  id         String   @id @default(cuid())
+  merchantId String
+  userId     String
+  isOwner    Boolean  @default(false)
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([merchantId, userId])
+}
+
+model MerchantCategory {
+  merchantId String
+  categoryId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id])
+  @@id([merchantId, categoryId])
+}
+
+model MerchantAddress {
+  id                   String   @id @default(cuid())
+  merchantId           String   @unique
+  postalCode           String?
+  prefectureCode       String?
+  prefectureName       String?
+  municipalityCode    String?
+  municipalityName    String?
+  town                 String?
+  chome                String?
+  block                String?
+  building             String?
+  room                 String?
+  fullAddress          String
+  latitude             Decimal? @db.Decimal(10, 7)
+  longitude            Decimal? @db.Decimal(10, 7)
+  merchant             Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  @@index([prefectureCode, municipalityCode])
+}
+
+model MerchantBusinessHour {
+  id         String   @id @default(cuid())
+  merchantId String
+  dayOfWeek  Int
+  isClosed   Boolean  @default(false)
+  openTime1  String?
+  closeTime1 String?
+  openTime2  String?
+  closeTime2 String?
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  @@unique([merchantId, dayOfWeek])
+}
+
+model MerchantSpecialHour {
+  id         String   @id @default(cuid())
+  merchantId String
+  date       DateTime @db.Date
+  isClosed   Boolean
+  openTime1  String?
+  closeTime1 String?
+  note       String?
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  @@unique([merchantId, date])
+}
+
+model MerchantVerification {
+  id                        String             @id @default(cuid())
+  merchantId                String
+  entityType                EntityType
+  representativeName        String?
+  corporateName             String?
+  corporateNumber           String?
+  invoiceRegistrationNumber String?
+  documentUrls              Json?
+  status                    VerificationStatus @default(PENDING)
+  rejectReason              String?
+  reviewedAt                DateTime?
+  merchant                  Merchant           @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  createdAt                 DateTime           @default(now())
+}
+
+model Service {
+  id            String        @id @default(cuid())
+  merchantId    String
+  categoryId    String?
+  nameJa        String
+  nameKana      String?
+  summaryJa     String?
+  descriptionJa String?
+  priceType     PriceType
+  priceMin      Int?
+  priceMax      Int?
+  unit          String?
+  taxIncluded   Boolean       @default(true)
+  coverUrl      String?
+  status        ContentStatus @default(DRAFT)
+  sort          Int           @default(0)
+  viewCount     Int           @default(0)
+  merchant      Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  category      Category?     @relation(fields: [categoryId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Product {
+  id            String        @id @default(cuid())
+  merchantId    String
+  categoryId    String?
+  nameJa        String
+  summaryJa     String?
+  descriptionJa String?
+  price         Int?
+  originalPrice Int?
+  stock         Int?
+  unit          String?
+  attributes    Json?
+  taxIncluded   Boolean       @default(true)
+  coverUrl      String?
+  status        ContentStatus @default(DRAFT)
+  viewCount     Int           @default(0)
+  merchant      Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  category      Category?     @relation(fields: [categoryId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model MediaFile {
+  id           String       @id @default(cuid())
+  merchantId   String?
+  bizType      MediaBizType
+  bizId        String
+  mediaType    MediaType
+  url          String
+  thumbnailUrl String?
+  mimeType     String?
+  size         Int?
+  sort         Int          @default(0)
+  merchant     Merchant?    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime     @default(now())
+  @@index([bizType, bizId])
+}
+
+model Favorite {
+  id         String       @id @default(cuid())
+  userId     String
+  type       FavoriteType
+  targetId   String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now())
+  @@unique([userId, type, targetId])
+}
+
+model Conversation {
+  id            String             @id @default(cuid())
+  customerId    String
+  merchantId    String
+  lastMessage   String?
+  lastMessageAt DateTime?
+  status        ConversationStatus @default(ACTIVE)
+  customer      User               @relation(fields: [customerId], references: [id])
+  merchant      Merchant           @relation(fields: [merchantId], references: [id])
+  messages      Message[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  @@unique([customerId, merchantId])
+  @@index([customerId])
+  @@index([merchantId])
+}
+
+model Message {
+  id             String            @id @default(cuid())
+  conversationId String
+  senderId       String
+  senderType     MessageSenderType
+  messageType    MessageType
+  content        String?
+  mediaUrl       String?
+  isRead         Boolean           @default(false)
+  conversation   Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User              @relation(fields: [senderId], references: [id])
+  createdAt      DateTime          @default(now())
+  @@index([conversationId, createdAt])
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String
+  linkUrl   String?
+  enabled   Boolean  @default(true)
+  sort      Int      @default(0)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String?
+  changes    Json?
+  ip         String?
+  admin      User     @relation(fields: [adminId], references: [id])
+  createdAt  DateTime @default(now())
+  @@index([adminId, createdAt])
+}

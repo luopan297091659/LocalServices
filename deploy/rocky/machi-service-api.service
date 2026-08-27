@@ -1,0 +1,30 @@
+[Unit]
+Description=Machi Service API
+Wants=network-online.target
+After=network-online.target postgresql.service redis.service
+
+[Service]
+Type=simple
+User=machi-service
+Group=machi-service
+WorkingDirectory=/opt/machi-service/current/apps/api
+EnvironmentFile=/etc/machi-service/api.env
+ExecStart=/usr/local/bin/node dist/src/main.js
+Restart=always
+RestartSec=5s
+TimeoutStopSec=30s
+KillSignal=SIGTERM
+UMask=0027
+LimitNOFILE=65535
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/var/lib/machi-service/uploads
+
+[Install]
+WantedBy=multi-user.target

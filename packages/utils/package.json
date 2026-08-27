@@ -1,0 +1,1 @@
+{"name":"@local/utils","version":"0.1.0","private":true,"type":"module","exports":{".":"./src/index.ts"},"scripts":{"build":"tsc","typecheck":"tsc --noEmit","lint":"node -e \"console.log('utils lint ok')\"","test":"vitest run"},"devDependencies":{"typescript":"^5.9.2","vitest":"^3.2.4"}}

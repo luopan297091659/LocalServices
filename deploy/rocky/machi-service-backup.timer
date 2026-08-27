@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Machi Service database backup
+
+[Timer]
+OnCalendar=*-*-* 03:15:00 Asia/Tokyo
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,7 @@
+[Unit]
+Description=Backup Machi Service PostgreSQL database
+After=postgresql.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/machi-service/current/deploy/rocky/backup-database.sh

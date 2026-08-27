@@ -1,0 +1,20 @@
+{
+  "name": "japan-local-service",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "dev:web": "pnpm --filter @local/web-client dev",
+    "dev:merchant": "pnpm --filter @local/merchant-admin dev",
+    "dev:admin": "pnpm --filter @local/platform-admin dev",
+    "dev:api": "pnpm --filter @local/api dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "db:generate": "pnpm --filter @local/api prisma:generate",
+    "db:migrate": "pnpm --filter @local/api prisma:migrate",
+    "db:seed": "pnpm --filter @local/api prisma:seed"
+  }
+}

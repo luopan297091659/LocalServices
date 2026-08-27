@@ -1,0 +1,5 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": { "strict": true, "noUncheckedIndexedAccess": true, "types": ["vite/client"], "baseUrl": ".", "paths": { "@local/types": ["../../packages/types/src/index.ts"] } },
+  "include": ["src/**/*.ts", "src/**/*.vue"]
+}

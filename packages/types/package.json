@@ -1,0 +1,9 @@
+{
+  "name": "@local/types",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "build": "tsc", "typecheck": "tsc --noEmit", "lint": "tsc --noEmit", "test": "node -e \"console.log('types: no tests')\"" },
+  "devDependencies": { "typescript": "^5.9.2" }
+}
