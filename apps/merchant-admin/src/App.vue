@@ -5,6 +5,8 @@ import type { ApiEnvelope, AuthResult, Merchant, Product, Service } from '@local
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL ?? '/api/v1' });
 const demoMode = import.meta.env.DEV;
+const publicPath = (import.meta.env.VITE_PUBLIC_PATH ?? '').replace(/^\/+|\/+$/g, '');
+const customerUrl = publicPath ? `/${publicPath}/` : '/';
 const token = ref(localStorage.getItem('merchantToken'));
 api.interceptors.request.use((config) => {
   if (token.value) config.headers.Authorization = `Bearer ${token.value}`;
@@ -117,7 +119,7 @@ onMounted(() => { if (token.value) void load(); });
       <div class="support">お困りですか？<small>サポートセンター</small></div>
     </aside>
     <main>
-      <header><div><span class="kicker">MERCHANT PORTAL</span><h1>{{ title }}</h1></div><div class="head-actions"><a href="/" target="_blank">店舗ページを表示 ↗</a><button @click="logout">ログアウト</button></div></header>
+      <header><div><span class="kicker">MERCHANT PORTAL</span><h1>{{ title }}</h1></div><div class="head-actions"><a :href="customerUrl" target="_blank">店舗ページを表示 ↗</a><button @click="logout">ログアウト</button></div></header>
       <section v-if="page === 'dashboard'">
         <div class="welcome"><div><span>おはようございます</span><h2>{{ profile?.nameJa }}</h2><p>店舗情報は公開中です。今日もお客様との出会いを大切に。</p></div><b>公開中 <small>●</small></b></div>
         <div class="stats"><article><span>本日の閲覧数</span><strong>48</strong><small>↗ 12.5% 前日比</small></article><article><span>今月の閲覧数</span><strong>{{ stats.viewCount.toLocaleString() }}</strong><small>↗ 8.2% 前月比</small></article><article><span>問い合わせ</span><strong>{{ stats.consultCount }}</strong><small>今月 24件</small></article><article><span>お気に入り</span><strong>{{ stats.favoriteCount }}</strong><small>↗ 18 今月</small></article></div>

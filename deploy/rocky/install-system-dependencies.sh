@@ -69,6 +69,7 @@ install -d -o machi-service -g machi-service -m 0750 /var/lib/machi-service/uplo
 install -d -o root -g machi-service -m 0750 /etc/machi-service
 
 systemctl enable --now postgresql redis nginx
+nginx -t
 systemctl restart nginx
 if systemctl is-active --quiet firewalld; then
   firewall-cmd --permanent --add-service=http

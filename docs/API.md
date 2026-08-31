@@ -1,6 +1,6 @@
 # API
 
-Base URL: ローカルは `http://localhost:3001/api/v1`、Rocky 本番は `https://<domain>/api/v1`。成功レスポンスは `{ success, code, message, data }`、失敗レスポンスは同じ envelope で `success: false` です。保護 API は `Authorization: Bearer <accessToken>` を使用します。公開店舗/カテゴリ/health API は認証不要です。
+Base URL: ローカルは `http://localhost:3001/api/v1`、Rocky 本番は `https://kotabi.top/local-services/api/v1`。Nginx が公開 URL の `/local-services` を除去して本机 `127.0.0.1:3001/api/v1` に転送します。成功レスポンスは `{ success, code, message, data }`、失敗レスポンスは同じ envelope で `success: false` です。保護 API は `Authorization: Bearer <accessToken>` を使用します。公開店舗/カテゴリ/health API は認証不要です。
 
 ## Health
 

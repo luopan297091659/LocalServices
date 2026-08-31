@@ -7,6 +7,7 @@ export interface AppEnvironment {
   JWT_SECRET: string | undefined;
   JWT_REFRESH_SECRET: string | undefined;
   APP_URL: string;
+  PUBLIC_PATH: string;
   UPLOAD_DIR: string;
   SWAGGER_ENABLED: boolean;
   TRUST_PROXY: string | boolean;
@@ -64,6 +65,11 @@ export function validateEnvironment(raw: Record<string, unknown>): Record<string
 
   const trustProxyValue = raw.TRUST_PROXY;
   const trustProxy = trustProxyValue === 'true' ? true : trustProxyValue === 'false' || trustProxyValue === undefined ? false : String(trustProxyValue);
+  const publicPathValue = typeof raw.PUBLIC_PATH === 'string' ? raw.PUBLIC_PATH.trim() : '';
+  const publicPath = !publicPathValue || publicPathValue === '/' ? '' : `/${publicPathValue.replace(/^\/+|\/+$/g, '')}`;
+  if (publicPath && (!/^\/[a-z0-9][a-z0-9/_-]*$/.test(publicPath) || publicPath.includes('//'))) {
+    throw new Error('PUBLIC_PATH must be a safe URL path such as /local-services');
+  }
 
   const environment: AppEnvironment = {
     NODE_ENV: nodeEnv,
@@ -74,6 +80,7 @@ export function validateEnvironment(raw: Record<string, unknown>): Record<string
     JWT_SECRET: validateSecret('JWT_SECRET', raw.JWT_SECRET, production),
     JWT_REFRESH_SECRET: validateSecret('JWT_REFRESH_SECRET', raw.JWT_REFRESH_SECRET, production),
     APP_URL: origins.join(','),
+    PUBLIC_PATH: publicPath,
     UPLOAD_DIR: typeof raw.UPLOAD_DIR === 'string' ? raw.UPLOAD_DIR : production ? '/var/lib/machi-service/uploads' : 'uploads',
     SWAGGER_ENABLED: asBoolean(raw.SWAGGER_ENABLED, !production),
     TRUST_PROXY: trustProxy,

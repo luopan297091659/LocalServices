@@ -17,6 +17,8 @@ export class UploadController {
   upload(@UploadedFile() file?: Express.Multer.File): { url: string; mimeType: string; size: number } {
     if (!file) throw new BadRequestException('JPEG、PNG、WEBP、MP4ファイルを選択してください');
     if (file.mimetype.startsWith('image/') && file.size > 10 * 1024 * 1024) throw new BadRequestException('画像は10MB以下にしてください');
-    return { url: `/uploads/${file.filename}`, mimeType: file.mimetype, size: file.size };
+    const configuredPath = process.env.PUBLIC_PATH?.trim() ?? '';
+    const publicPath = !configuredPath || configuredPath === '/' ? '' : `/${configuredPath.replace(/^\/+|\/+$/g, '')}`;
+    return { url: `${publicPath}/uploads/${file.filename}`, mimeType: file.mimetype, size: file.size };
   }
 }
