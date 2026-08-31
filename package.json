@@ -2,6 +2,10 @@
   "name": "japan-local-service",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "pnpm --parallel --filter './apps/*' dev",
