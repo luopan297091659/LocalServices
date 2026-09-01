@@ -28,7 +28,7 @@ Internet -> kotabi.top 的现有 Nginx (:80/:443)
 sudo bash deploy/rocky/install-system-dependencies.sh
 ```
 
-脚本会安装 PostgreSQL 16/PostGIS、Redis、Nginx、Node.js 24、pnpm 11，创建低权限账号 `machi-service`，启用服务并配置必要的 SELinux 网络权限。Node.js 安装包在解压前会校验官方 SHA-256 清单。
+脚本会安装 PostgreSQL 16/PostGIS、Redis、Nginx、Node.js 18、npm，创建低权限账号 `machi-service`，启用服务并配置必要的 SELinux 网络权限。Node.js 安装包在解压前会校验官方 SHA-256 清单。
 
 ### 使用 PM2 管理 API（可选）
 
@@ -139,13 +139,13 @@ sudo systemctl reload nginx
 export VITE_PUBLIC_PATH=/local-services
 export VITE_API_URL=/local-services/api/v1
 
-pnpm install --frozen-lockfile
-pnpm db:generate
-pnpm build:frontend  # 顾客端、商家管理端、平台管理端
-pnpm build:backend   # NestJS API
+npm ci --include=dev
+npm run db:generate
+npm run build:frontend  # 顾客端、商家管理端、平台管理端
+npm run build:backend   # NestJS API
 ```
 
-也可用 `pnpm build` 一次编译所有工作区。前端产物分别位于 `apps/web-client/dist`、`apps/merchant-admin/dist`、`apps/platform-admin/dist`；发布脚本会将它们复制到 Nginx 读取的 `public-root${VITE_PUBLIC_PATH}` 目录。
+也可用 `npm run build` 一次编译所有工作区。前端产物分别位于 `apps/web-client/dist`、`apps/merchant-admin/dist`、`apps/platform-admin/dist`；发布脚本会将它们复制到 Nginx 读取的 `public-root${VITE_PUBLIC_PATH}` 目录。
 
 ### PM2 手工启动与日常命令
 

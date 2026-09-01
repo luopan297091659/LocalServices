@@ -46,10 +46,10 @@ rsync -a --delete \
 chown -R machi-service:machi-service "${release_dir}"
 
 clean_env=(env -i HOME=/var/lib/machi-service PATH=/usr/local/bin:/usr/bin:/bin)
-runuser -u machi-service -- "${clean_env[@]}" bash -c "cd '${release_dir}' && corepack pnpm install --frozen-lockfile"
+runuser -u machi-service -- "${clean_env[@]}" bash -c "cd '${release_dir}' && npm ci --include=dev"
 runuser -u machi-service -- "${clean_env[@]}" DATABASE_URL=postgresql://unused:unused@127.0.0.1:5432/unused \
   VITE_PUBLIC_PATH="${public_path}" VITE_API_URL="${public_path}/api/v1" \
-  bash -c "cd '${release_dir}' && corepack pnpm db:generate && corepack pnpm build"
+  bash -c "cd '${release_dir}' && npm run db:generate && npm run build"
 
 public_dir="${release_dir}/public-root${public_path}"
 install -d -o machi-service -g machi-service -m 0750 \
@@ -69,9 +69,9 @@ if [[ ! "${SERVER_NAME}" =~ ^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$ ]]; then
   exit 1
 fi
 runuser -u machi-service -- "${clean_env[@]}" DATABASE_URL="${DATABASE_URL}" \
-  bash -c "cd '${release_dir}' && corepack pnpm --filter @local/api prisma:deploy"
+  bash -c "cd '${release_dir}' && npm run prisma:deploy --workspace=@local/api"
 runuser -u machi-service -- "${clean_env[@]}" DATABASE_URL="${DATABASE_URL}" SEED_DEMO_DATA=false \
-  bash -c "cd '${release_dir}' && corepack pnpm --filter @local/api prisma:seed"
+  bash -c "cd '${release_dir}' && npm run prisma:seed --workspace=@local/api"
 
 install -o root -g root -m 0644 "${release_dir}/deploy/rocky/machi-service-api.service" /etc/systemd/system/machi-service-api.service
 install -o root -g root -m 0644 "${release_dir}/deploy/rocky/machi-service-api.ecosystem.config.cjs" /etc/machi-service/machi-service-api.ecosystem.config.cjs

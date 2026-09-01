@@ -33,7 +33,7 @@ case "$(uname -m)" in
   *) echo "不支持的 CPU 架构：$(uname -m)" >&2; exit 1 ;;
 esac
 
-node_index_url="https://nodejs.org/dist/latest-v24.x"
+node_index_url="https://nodejs.org/dist/latest-v18.x"
 temp_dir="$(mktemp -d)"
 trap 'rm -rf -- "$temp_dir"' EXIT
 curl --fail --silent --show-error --location "${node_index_url}/SHASUMS256.txt" --output "${temp_dir}/SHASUMS256.txt"
@@ -49,11 +49,9 @@ install -d -m 0755 /usr/local/lib/nodejs
 node_dir="${node_archive%.tar.xz}"
 rm -rf -- "/usr/local/lib/nodejs/${node_dir}"
 tar -xJf "${temp_dir}/${node_archive}" -C /usr/local/lib/nodejs
-for binary in node npm npx corepack; do
+for binary in node npm npx; do
   ln -sfn "/usr/local/lib/nodejs/${node_dir}/bin/${binary}" "/usr/local/bin/${binary}"
 done
-corepack enable
-corepack prepare pnpm@11.19.0 --activate
 
 if ! getent group machi-service >/dev/null; then
   groupadd --system machi-service
@@ -78,4 +76,4 @@ if systemctl is-active --quiet firewalld; then
 fi
 setsebool -P httpd_can_network_connect 1
 
-echo "系统依赖安装完成：$(node --version), pnpm $(pnpm --version), PostgreSQL 16, Redis, Nginx。"
+echo "系统依赖安装完成：$(node --version), npm $(npm --version), PostgreSQL 16, Redis, Nginx。"

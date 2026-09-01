@@ -32,5 +32,5 @@ fi
 
 runuser -u machi-service -- env -i HOME=/var/lib/machi-service PATH=/usr/local/bin:/usr/bin:/bin \
   DATABASE_URL="${DATABASE_URL}" ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_NICKNAME="${ADMIN_NICKNAME}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
-  bash -c 'cd /opt/machi-service/current && corepack pnpm --filter @local/api prisma:create-admin'
+  bash -c 'cd /opt/machi-service/current && npm run prisma:create-admin --workspace=@local/api'
 unset ADMIN_PASSWORD password_confirmation

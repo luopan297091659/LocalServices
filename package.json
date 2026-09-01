@@ -2,26 +2,29 @@
   "name": "japan-local-service",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18.18 <19"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
-  "packageManager": "pnpm@11.19.0",
+  "packageManager": "npm@10.8.2",
   "scripts": {
-    "dev": "pnpm --parallel --filter './apps/*' dev",
-    "dev:web": "pnpm --filter @local/web-client dev",
-    "dev:merchant": "pnpm --filter @local/merchant-admin dev",
-    "dev:admin": "pnpm --filter @local/platform-admin dev",
-    "dev:api": "pnpm --filter @local/api dev",
-    "build": "pnpm -r build",
-    "build:frontend": "pnpm --filter @local/web-client build && pnpm --filter @local/merchant-admin build && pnpm --filter @local/platform-admin build",
-    "build:backend": "pnpm --filter @local/api build",
-    "start:prod": "pnpm --filter @local/api start:prod",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
-    "lint": "pnpm -r lint",
-    "db:generate": "pnpm --filter @local/api prisma:generate",
-    "db:migrate": "pnpm --filter @local/api prisma:migrate",
-    "db:seed": "pnpm --filter @local/api prisma:seed"
+    "dev": "npm run dev --workspaces --if-present --parallel",
+    "dev:web": "npm run dev --workspace=@local/web-client",
+    "dev:merchant": "npm run dev --workspace=@local/merchant-admin",
+    "dev:admin": "npm run dev --workspace=@local/platform-admin",
+    "dev:api": "npm run dev --workspace=@local/api",
+    "build": "npm run build --workspaces --if-present",
+    "build:frontend": "npm run build --workspace=@local/web-client && npm run build --workspace=@local/merchant-admin && npm run build --workspace=@local/platform-admin",
+    "build:backend": "npm run build --workspace=@local/api",
+    "start:prod": "npm run start:prod --workspace=@local/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "db:generate": "npm run prisma:generate --workspace=@local/api",
+    "db:migrate": "npm run prisma:migrate --workspace=@local/api",
+    "db:seed": "npm run prisma:seed --workspace=@local/api"
   }
 }
