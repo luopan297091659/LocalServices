@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -106,7 +106,7 @@ model User {
   passwordHash     String
   refreshTokenHash String?
   nickname         String?
-  avatarUrl        String?
+  avatarUrl        String?          @db.Text
   locale           String           @default("ja-JP")
   role             UserRole         @default(CUSTOMER)
   status           UserStatus       @default(ACTIVE)
@@ -161,15 +161,15 @@ model Merchant {
   nameKana           String?
   nameEn             String?
   slug               String?                @unique
-  logoUrl            String?
-  coverUrl           String?
-  descriptionJa      String?
-  shortDescriptionJa String?
+  logoUrl            String?                @db.Text
+  coverUrl           String?                @db.Text
+  descriptionJa      String?                @db.Text
+  shortDescriptionJa String?                @db.Text
   phone              String?
   email              String?
-  website            String?
-  lineUrl            String?
-  instagramUrl       String?
+  website            String?                @db.Text
+  lineUrl            String?                @db.Text
+  instagramUrl       String?                @db.Text
   status             MerchantStatus         @default(DRAFT)
   rating             Decimal                @default(0) @db.Decimal(2, 1)
   reviewCount        Int                    @default(0)
@@ -221,13 +221,14 @@ model MerchantAddress {
   block                String?
   building             String?
   room                 String?
-  fullAddress          String
+  fullAddress          String   @db.Text
   latitude             Decimal? @db.Decimal(10, 7)
   longitude            Decimal? @db.Decimal(10, 7)
   merchant             Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   @@index([prefectureCode, municipalityCode])
+  @@index([latitude, longitude])
 }
 
 model MerchantBusinessHour {
@@ -266,7 +267,7 @@ model MerchantVerification {
   invoiceRegistrationNumber String?
   documentUrls              Json?
   status                    VerificationStatus @default(PENDING)
-  rejectReason              String?
+  rejectReason              String?            @db.Text
   reviewedAt                DateTime?
   merchant                  Merchant           @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   createdAt                 DateTime           @default(now())
@@ -278,14 +279,14 @@ model Service {
   categoryId    String?
   nameJa        String
   nameKana      String?
-  summaryJa     String?
-  descriptionJa String?
+  summaryJa     String?       @db.Text
+  descriptionJa String?       @db.Text
   priceType     PriceType
   priceMin      Int?
   priceMax      Int?
   unit          String?
   taxIncluded   Boolean       @default(true)
-  coverUrl      String?
+  coverUrl      String?       @db.Text
   status        ContentStatus @default(DRAFT)
   sort          Int           @default(0)
   viewCount     Int           @default(0)
@@ -300,15 +301,15 @@ model Product {
   merchantId    String
   categoryId    String?
   nameJa        String
-  summaryJa     String?
-  descriptionJa String?
+  summaryJa     String?       @db.Text
+  descriptionJa String?       @db.Text
   price         Int?
   originalPrice Int?
   stock         Int?
   unit          String?
   attributes    Json?
   taxIncluded   Boolean       @default(true)
-  coverUrl      String?
+  coverUrl      String?       @db.Text
   status        ContentStatus @default(DRAFT)
   viewCount     Int           @default(0)
   merchant      Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
@@ -323,8 +324,8 @@ model MediaFile {
   bizType      MediaBizType
   bizId        String
   mediaType    MediaType
-  url          String
-  thumbnailUrl String?
+  url          String       @db.Text
+  thumbnailUrl String?      @db.Text
   mimeType     String?
   size         Int?
   sort         Int          @default(0)
@@ -347,7 +348,7 @@ model Conversation {
   id            String             @id @default(cuid())
   customerId    String
   merchantId    String
-  lastMessage   String?
+  lastMessage   String?              @db.Text
   lastMessageAt DateTime?
   status        ConversationStatus @default(ACTIVE)
   customer      User               @relation(fields: [customerId], references: [id])
@@ -366,8 +367,8 @@ model Message {
   senderId       String
   senderType     MessageSenderType
   messageType    MessageType
-  content        String?
-  mediaUrl       String?
+  content        String?            @db.Text
+  mediaUrl       String?            @db.Text
   isRead         Boolean           @default(false)
   conversation   Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User              @relation(fields: [senderId], references: [id])
@@ -378,8 +379,8 @@ model Message {
 model Banner {
   id        String   @id @default(cuid())
   title     String
-  imageUrl  String
-  linkUrl   String?
+  imageUrl  String   @db.Text
+  linkUrl   String?  @db.Text
   enabled   Boolean  @default(true)
   sort      Int      @default(0)
   startsAt  DateTime?

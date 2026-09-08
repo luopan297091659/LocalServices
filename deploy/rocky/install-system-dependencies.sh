@@ -18,13 +18,7 @@ if [[ "${major_version}" != "9" ]]; then
 fi
 
 dnf -y install dnf-plugins-core curl git nginx redis rsync tar xz firewalld policycoreutils-python-utils
-dnf -y module reset postgresql
-dnf -y module enable postgresql:16
-dnf -y install postgresql-server postgresql-contrib postgis
-
-if [[ ! -s /var/lib/pgsql/data/PG_VERSION ]]; then
-  postgresql-setup --initdb
-fi
+dnf -y install mariadb-server
 
 node_arch=""
 case "$(uname -m)" in
@@ -66,7 +60,7 @@ install -d -o machi-service -g machi-service -m 0750 /var/lib/machi-service
 install -d -o machi-service -g machi-service -m 0750 /var/lib/machi-service/uploads
 install -d -o root -g machi-service -m 0750 /etc/machi-service
 
-systemctl enable --now postgresql redis nginx
+systemctl enable --now mariadb redis nginx
 nginx -t
 systemctl restart nginx
 if systemctl is-active --quiet firewalld; then
@@ -76,4 +70,4 @@ if systemctl is-active --quiet firewalld; then
 fi
 setsebool -P httpd_can_network_connect 1
 
-echo "系统依赖安装完成：$(node --version), npm $(npm --version), PostgreSQL 16, Redis, Nginx。"
+echo "系统依赖安装完成：$(node --version), npm $(npm --version), MariaDB, Redis, Nginx。"

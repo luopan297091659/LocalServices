@@ -1,7 +1,7 @@
 [Unit]
 Description=Machi Service API
 Wants=network-online.target
-After=network-online.target postgresql.service redis.service
+After=network-online.target mariadb.service redis.service
 
 [Service]
 Type=simple

@@ -5,7 +5,7 @@ Base URL: ローカルは `http://localhost:3001/api/v1`、Rocky 本番は `http
 ## Health
 
 - `GET /health`, `GET /health/live`: process liveness
-- `GET /health/ready`: PostgreSQL readiness（デプロイと監視に使用）
+- `GET /health/ready`: MariaDB readiness（デプロイと監視に使用）
 
 ## Authentication
 

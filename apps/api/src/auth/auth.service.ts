@@ -49,7 +49,9 @@ export class AuthService {
       payload = await this.jwt.verifyAsync<AuthUser>(refreshToken, { secret: this.config.get<string>('JWT_REFRESH_SECRET') ?? 'dev-only-refresh-secret-change-me' });
     } catch { throw new UnauthorizedException('リフレッシュトークンが無効です'); }
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-    if (!user?.refreshTokenHash || !(await argon2.verify(user.refreshTokenHash, refreshToken))) throw new UnauthorizedException('リフレッシュトークンが無効です');
+    if (!user || user.status !== 'ACTIVE' || !user.refreshTokenHash || !(await argon2.verify(user.refreshTokenHash, refreshToken))) {
+      throw new UnauthorizedException('リフレッシュトークンが無効です');
+    }
     const tokens = await this.issueTokens({ sub: user.id, role: user.role, ...(user.email ? { email: user.email } : {}) });
     await this.saveRefreshToken(user.id, tokens.refreshToken);
     return tokens;

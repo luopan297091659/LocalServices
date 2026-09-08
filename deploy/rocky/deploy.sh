@@ -47,7 +47,7 @@ chown -R machi-service:machi-service "${release_dir}"
 
 clean_env=(env -i HOME=/var/lib/machi-service PATH=/usr/local/bin:/usr/bin:/bin)
 runuser -u machi-service -- "${clean_env[@]}" bash -c "cd '${release_dir}' && npm ci --include=dev"
-runuser -u machi-service -- "${clean_env[@]}" DATABASE_URL=postgresql://unused:unused@127.0.0.1:5432/unused \
+runuser -u machi-service -- "${clean_env[@]}" DATABASE_URL=mysql://unused:unused@127.0.0.1:3306/unused \
   VITE_PUBLIC_PATH="${public_path}" VITE_API_URL="${public_path}/api/v1" \
   bash -c "cd '${release_dir}' && npm run db:generate && npm run build"
 

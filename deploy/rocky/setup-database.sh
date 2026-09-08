@@ -19,21 +19,19 @@ if [[ ${#DB_PASSWORD} -lt 20 ]]; then
   echo "DB_PASSWORD 至少需要 20 个字符。" >&2
   exit 1
 fi
+if [[ ! "${DB_PASSWORD}" =~ ^[A-Za-z0-9_-]+$ ]]; then
+  echo "DB_PASSWORD 只能使用 URL 安全的字母、数字、下划线和连字符。" >&2
+  exit 1
+fi
 
-runuser -u postgres -- psql --set ON_ERROR_STOP=1 --command "ALTER SYSTEM SET password_encryption = 'scram-sha-256';"
-sed -ri '/^host[[:space:]]+all[[:space:]]+all[[:space:]]+(127\.0\.0\.1\/32|::1\/128)[[:space:]]+/ s/[[:space:]]+(ident|md5|password)[[:space:]]*$/ scram-sha-256/' /var/lib/pgsql/data/pg_hba.conf
-systemctl reload postgresql
-
-runuser -u postgres -- psql --set ON_ERROR_STOP=1 --set role="${DB_USER}" --set password="${DB_PASSWORD}" <<'SQL'
-SELECT format('CREATE ROLE %I LOGIN', :'role')
-WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'role') \gexec
-SELECT format('ALTER ROLE %I PASSWORD %L', :'role', :'password') \gexec
+mysql --protocol=socket --user=root <<SQL
+CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASSWORD}';
+CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
+ALTER USER '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASSWORD}';
+ALTER USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
+FLUSH PRIVILEGES;
 SQL
-
-runuser -u postgres -- psql --set ON_ERROR_STOP=1 --set db="${DB_NAME}" --set role="${DB_USER}" <<'SQL'
-SELECT format('CREATE DATABASE %I OWNER %I', :'db', :'role')
-WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = :'db') \gexec
-SQL
-
-runuser -u postgres -- psql --dbname "${DB_NAME}" --set ON_ERROR_STOP=1 --command 'CREATE EXTENSION IF NOT EXISTS postgis;'
 echo "数据库 ${DB_NAME} 及账号 ${DB_USER} 已就绪。"

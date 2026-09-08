@@ -1,6 +1,6 @@
 [Unit]
-Description=Backup Machi Service PostgreSQL database
-After=postgresql.service
+Description=Backup Machi Service MariaDB database
+After=mariadb.service
 
 [Service]
 Type=oneshot

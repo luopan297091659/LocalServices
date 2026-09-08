@@ -9,7 +9,7 @@ Internet -> kotabi.top 的现有 Nginx (:80/:443)
               |-- /local-services/platform-admin/          平台管理静态文件
               |-- /local-services/api/                     NestJS (:3001，仅监听 127.0.0.1)
               `-- /local-services/uploads/                 本地上传目录
-                         |-- PostgreSQL 16 + PostGIS
+                         |-- MariaDB 10.5+
                          `-- Redis
 ```
 
@@ -18,7 +18,7 @@ Internet -> kotabi.top 的现有 Nginx (:80/:443)
 - Rocky Linux 9 x86_64 或 aarch64，建议至少 2 vCPU / 4 GB RAM。
 - 当前域名为 `kotabi.top`，使用 `/local-services` 与同域名下其他系统隔离。
 - 使用有 sudo/root 权限的账号上传或克隆代码，例如 `/srv/machi-service-src`。
-- 云平台安全组仅开放 SSH、80、443；不要对公网开放 3001、5432、6379。
+- 云平台安全组仅开放 SSH、80、443；不要对公网开放 3001、3306、6379。
 
 以下命令均在项目根目录执行。
 
@@ -28,7 +28,7 @@ Internet -> kotabi.top 的现有 Nginx (:80/:443)
 sudo bash deploy/rocky/install-system-dependencies.sh
 ```
 
-脚本会安装 PostgreSQL 16/PostGIS、Redis、Nginx、Node.js 18、npm，创建低权限账号 `machi-service`，启用服务并配置必要的 SELinux 网络权限。Node.js 安装包在解压前会校验官方 SHA-256 清单。
+脚本会安装 MariaDB、Redis、Nginx、Node.js 18、npm，创建低权限账号 `machi-service`，启用服务并配置必要的 SELinux 网络权限。Node.js 安装包在解压前会校验官方 SHA-256 清单。
 
 ### 使用 PM2 管理 API（可选）
 
@@ -51,7 +51,7 @@ sudo DB_NAME=machi_service DB_USER=machi_service DB_PASSWORD="${DB_PASSWORD}" \
   bash deploy/rocky/setup-database.sh
 ```
 
-脚本可重复运行，会创建/更新账号、数据库、PostGIS 扩展，并将本机 TCP 认证设置为 SCRAM-SHA-256。
+脚本可重复运行，会创建/更新仅限本机连接的 MariaDB 账号和使用 `utf8mb4_unicode_ci` 的数据库。
 
 ## 4. 配置生产环境
 
@@ -67,7 +67,7 @@ sudo vi /etc/machi-service/api.env
 PROCESS_MANAGER=pm2
 SERVER_NAME=kotabi.top
 PUBLIC_PATH=/local-services
-DATABASE_URL=postgresql://machi_service:上一步的密码@127.0.0.1:5432/machi_service?schema=public
+DATABASE_URL=mysql://machi_service:上一步的密码@127.0.0.1:3306/machi_service
 JWT_SECRET=使用_openssl_rand_hex_32_生成
 JWT_REFRESH_SECRET=使用另一次_openssl_rand_hex_32_生成
 APP_URL=https://kotabi.top
@@ -80,7 +80,7 @@ openssl rand -hex 32
 openssl rand -hex 32
 ```
 
-环境文件禁止提交到 Git。生产校验会拒绝短密钥、示例密钥、非 PostgreSQL 数据库地址和非 HTTPS 的 `APP_URL`。
+环境文件禁止提交到 Git。生产校验会拒绝短密钥、示例密钥、非 MySQL/MariaDB 数据库地址和非 HTTPS 的 `APP_URL`。
 
 ## 5. 首次发布及后续更新
 
@@ -147,6 +147,8 @@ npm run build:backend   # NestJS API
 
 也可用 `npm run build` 一次编译所有工作区。前端产物分别位于 `apps/web-client/dist`、`apps/merchant-admin/dist`、`apps/platform-admin/dist`；发布脚本会将它们复制到 Nginx 读取的 `public-root${VITE_PUBLIC_PATH}` 目录。
 
+若要在 Windows 本机构建并只上传前端静态文件，执行 `npm run build:frontend:bundle`。它会按 `/local-services` 的生产路径重新构建，并汇总到 `artifacts/frontend/local-services/`：顾客端位于根目录，商家后台位于 `merchant-admin/`，平台后台位于 `platform-admin/`。在 Rocky 上将该目录内容复制至 Nginx 的 `public-root/local-services/` 即可；如实际 `PUBLIC_PATH` 不同，在命令前设置相同的 `VITE_PUBLIC_PATH`。
+
 ### PM2 手工启动与日常命令
 
 使用 `PROCESS_MANAGER=pm2` 并完成首次发布后，部署脚本会自动启动 API。需要手工启动或重载时，使用低权限账号运行以下命令：
@@ -171,7 +173,7 @@ sudo -u machi-service env HOME=/var/lib/machi-service PATH=/usr/local/bin:/usr/b
 /opt/machi-service/current                当前版本软链接（含 public-root/local-services 静态站点）
 /etc/machi-service/api.env                生产密钥（0640）
 /var/lib/machi-service/uploads            上传文件
-/var/backups/machi-service                PostgreSQL 自定义格式备份
+/var/backups/machi-service                MariaDB gzip 压缩 SQL 备份
 ```
 
 ## 6. 启用 HTTPS
@@ -225,13 +227,15 @@ sudo systemctl list-timers machi-service-backup.timer
 
 # 恢复示例（先停 API，并替换为实际备份文件）
 sudo systemctl stop machi-service-api
-sudo -u postgres dropdb --if-exists machi_service_restore
-sudo -u postgres createdb --owner=machi_service machi_service_restore
-sudo -u postgres pg_restore --dbname=machi_service_restore \
-  /var/backups/machi-service/database-YYYYMMDDTHHMMSSZ.dump
+sudo mariadb -e 'DROP DATABASE IF EXISTS machi_service_restore; CREATE DATABASE machi_service_restore CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'
+sudo sh -c 'gzip -dc /var/backups/machi-service/database-YYYYMMDDTHHMMSSZ.sql.gz | mariadb machi_service_restore'
 ```
 
 正式恢复前应在独立数据库完成恢复演练和数据校验。备份脚本不会自动删除旧文件，请按磁盘容量设置外部归档与保留策略。
+
+### 从 PostgreSQL 迁移既有生产数据
+
+本次变更重新生成了适用于空 MariaDB 数据库的 Prisma 初始迁移，不能将既有 PostgreSQL 实例直接执行 `prisma migrate deploy`。先保留 PostgreSQL 备份，在维护窗口内新建 MariaDB 数据库，将表数据按依赖顺序（参考表、用户/商家、关联表、内容与日志）导入；导入后对每张表做行数核对，并在切换 `DATABASE_URL` 前运行 `prisma migrate resolve --applied 20260827000000_init` 标记初始迁移。现有数据的 JSON、时间戳和布尔值必须在导入工具中按 MariaDB 类型转换。
 
 ## 8. 上线检查
 
@@ -239,7 +243,7 @@ sudo -u postgres pg_restore --dbname=machi_service_restore \
 - `/api/v1/health/live` 和 `/api/v1/health/ready` 返回 200。
 - `https://kotabi.top/local-services/` 可以打开。
 - 顾客端、商家端、平台端均能通过 HTTPS 打开，刷新子路径不返回 404。
-- 数据库 5432、Redis 6379、API 3001 不可从公网连接。
+- 数据库 3306、Redis 6379、API 3001 不可从公网连接。
 - Certbot 续期定时器、数据库备份定时器正常，并完成至少一次恢复演练。
 - 创建真实的首个平台管理员，不使用或导入开发演示账号。
 - 为 `/var/backups/machi-service` 配置异机/对象存储加密归档。

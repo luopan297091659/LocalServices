@@ -20,7 +20,7 @@ function asBoolean(value: unknown, fallback: boolean): boolean {
   if (typeof value === 'boolean') return value;
   if (value === 'true' || value === '1') return true;
   if (value === 'false' || value === '0') return false;
-  throw new Error(`Invalid boolean value: ${String(value)}`);
+  throw new Error('Invalid boolean value');
 }
 
 function validateSecret(name: string, value: unknown, production: boolean): string | undefined {
@@ -44,11 +44,11 @@ export function validateEnvironment(raw: Record<string, unknown>): Record<string
   if (production) {
     try {
       const parsedDatabaseUrl = new URL(databaseUrl ?? '');
-      if (parsedDatabaseUrl.protocol !== 'postgresql:' || !parsedDatabaseUrl.username || !parsedDatabaseUrl.password || /change|replace|example/i.test(databaseUrl ?? '')) {
+      if (parsedDatabaseUrl.protocol !== 'mysql:' || !parsedDatabaseUrl.username || !parsedDatabaseUrl.password || /change|replace|example/i.test(databaseUrl ?? '')) {
         throw new Error();
       }
     } catch {
-      throw new Error('DATABASE_URL must be a complete PostgreSQL URL without placeholder credentials in production');
+      throw new Error('DATABASE_URL must be a complete MySQL/MariaDB URL without placeholder credentials in production');
     }
   }
 
@@ -64,7 +64,11 @@ export function validateEnvironment(raw: Record<string, unknown>): Record<string
   }
 
   const trustProxyValue = raw.TRUST_PROXY;
-  const trustProxy = trustProxyValue === 'true' ? true : trustProxyValue === 'false' || trustProxyValue === undefined ? false : String(trustProxyValue);
+  let trustProxy: string | boolean;
+  if (trustProxyValue === 'true') trustProxy = true;
+  else if (trustProxyValue === 'false' || trustProxyValue === undefined) trustProxy = false;
+  else if (typeof trustProxyValue === 'string') trustProxy = trustProxyValue;
+  else throw new Error('TRUST_PROXY must be a string or boolean');
   const publicPathValue = typeof raw.PUBLIC_PATH === 'string' ? raw.PUBLIC_PATH.trim() : '';
   const publicPath = !publicPathValue || publicPathValue === '/' ? '' : `/${publicPathValue.replace(/^\/+|\/+$/g, '')}`;
   if (publicPath && (!/^\/[a-z0-9][a-z0-9/_-]*$/.test(publicPath) || publicPath.includes('//'))) {

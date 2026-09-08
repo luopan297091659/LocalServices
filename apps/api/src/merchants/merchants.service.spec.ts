@@ -10,4 +10,16 @@ describe('MerchantsService', () => {
     expect(receivedQuery).toMatchObject({ where: { status: 'ACTIVE' } });
     expect(result.pagination).toEqual({ page: 1, pageSize: 20, total: 0, totalPages: 0 });
   });
+
+  it('半径検索ではデータベース側の経緯度範囲で候補を絞り込む', async () => {
+    let receivedQuery: unknown;
+    const findMany = jest.fn((query: unknown): Promise<never[]> => { receivedQuery = query; return Promise.resolve([]); });
+    const service = new MerchantsService({ merchant: { findMany } } as never);
+    await service.search({ sort: 'distance', page: 1, pageSize: 20, lat: 35, lng: 135, radius: 10_000 });
+    const bounds = (receivedQuery as { where?: { address?: { is?: { latitude?: { gte?: unknown; lte?: unknown }; longitude?: { gte?: unknown; lte?: unknown } } } } }).where?.address?.is;
+    expect(typeof bounds?.latitude?.gte).toBe('number');
+    expect(typeof bounds?.latitude?.lte).toBe('number');
+    expect(typeof bounds?.longitude?.gte).toBe('number');
+    expect(typeof bounds?.longitude?.lte).toBe('number');
+  });
 });

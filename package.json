@@ -18,6 +18,7 @@
     "dev:api": "npm run dev --workspace=@local/api",
     "build": "npm run build --workspaces --if-present",
     "build:frontend": "npm run build --workspace=@local/web-client && npm run build --workspace=@local/merchant-admin && npm run build --workspace=@local/platform-admin",
+    "build:frontend:bundle": "node scripts/build-frontend-bundle.mjs",
     "build:backend": "npm run build --workspace=@local/api",
     "start:prod": "npm run start:prod --workspace=@local/api",
     "typecheck": "npm run typecheck --workspaces --if-present",

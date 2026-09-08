@@ -10,17 +10,23 @@ export class MerchantsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async search(query: SearchMerchantsDto) {
+    const useDistance = query.lat !== undefined && query.lng !== undefined;
+    const addressWhere: Prisma.MerchantAddressWhereInput = {
+      ...(query.prefectureCode ? { prefectureCode: query.prefectureCode } : {}),
+      ...(query.municipalityCode ? { municipalityCode: query.municipalityCode } : {}),
+      ...(useDistance && query.radius ? this.distanceBounds(query.lat!, query.lng!, query.radius) : {}),
+    };
     const where: Prisma.MerchantWhereInput = {
       status: 'ACTIVE',
-      ...(query.prefectureCode || query.municipalityCode ? { address: { is: { ...(query.prefectureCode ? { prefectureCode: query.prefectureCode } : {}), ...(query.municipalityCode ? { municipalityCode: query.municipalityCode } : {}) } } } : {}),
+      ...(Object.keys(addressWhere).length ? { address: { is: addressWhere } } : {}),
       ...(query.categoryId ? { categories: { some: { categoryId: query.categoryId } } } : {}),
       ...(query.keyword ? { OR: [
-        { nameJa: { contains: query.keyword, mode: 'insensitive' } },
-        { nameKana: { contains: query.keyword, mode: 'insensitive' } },
-        { descriptionJa: { contains: query.keyword, mode: 'insensitive' } },
-        { categories: { some: { category: { nameJa: { contains: query.keyword, mode: 'insensitive' } } } } },
-        { services: { some: { status: 'PUBLISHED', OR: [{ nameJa: { contains: query.keyword, mode: 'insensitive' } }, { nameKana: { contains: query.keyword, mode: 'insensitive' } }] } } },
-        { products: { some: { status: 'PUBLISHED', nameJa: { contains: query.keyword, mode: 'insensitive' } } } },
+        { nameJa: { contains: query.keyword } },
+        { nameKana: { contains: query.keyword } },
+        { descriptionJa: { contains: query.keyword } },
+        { categories: { some: { category: { nameJa: { contains: query.keyword } } } } },
+        { services: { some: { status: 'PUBLISHED', OR: [{ nameJa: { contains: query.keyword } }, { nameKana: { contains: query.keyword } }] } } },
+        { products: { some: { status: 'PUBLISHED', nameJa: { contains: query.keyword } } } },
       ] } : {}),
       ...(query.openNow ? this.openNowWhere() : {}),
     };
@@ -29,7 +35,6 @@ export class MerchantsService {
       : query.sort === 'popular' ? { viewCount: 'desc' }
       : query.sort === 'newest' ? { createdAt: 'desc' }
       : { favoriteCount: 'desc' };
-    const useDistance = query.lat !== undefined && query.lng !== undefined;
     const raw = await this.prisma.merchant.findMany({
       where,
       include: {
@@ -40,12 +45,15 @@ export class MerchantsService {
       orderBy,
       ...(useDistance ? {} : { skip: (query.page - 1) * query.pageSize, take: query.pageSize }),
     });
-    let items: MerchantWithDistance[] = raw.map((merchant) => ({
-      ...merchant,
-      ...(useDistance && merchant.address?.latitude && merchant.address.longitude
-        ? { distance: this.distanceMeters(query.lat!, query.lng!, Number(merchant.address.latitude), Number(merchant.address.longitude)) }
-        : {}),
-    }));
+    let items: MerchantWithDistance[] = raw.map((merchant) => {
+      const address = merchant.address;
+      return {
+        ...merchant,
+        ...(useDistance && address && address.latitude !== null && address.longitude !== null
+          ? { distance: this.distanceMeters(query.lat!, query.lng!, Number(address.latitude), Number(address.longitude)) }
+          : {}),
+      };
+    });
     if (query.radius && useDistance) items = items.filter((item) => typeof item.distance === 'number' && item.distance <= query.radius!);
     if (query.sort === 'distance') items.sort((a, b) => (a.distance ?? Number.MAX_VALUE) - (b.distance ?? Number.MAX_VALUE));
     const total = useDistance ? items.length : await this.prisma.merchant.count({ where });
@@ -83,6 +91,16 @@ export class MerchantsService {
       { openTime1: { lte: time }, closeTime1: { gt: time } },
       { openTime2: { lte: time }, closeTime2: { gt: time } },
     ] } } };
+  }
+
+  private distanceBounds(latitude: number, longitude: number, radiusMeters: number): Prisma.MerchantAddressWhereInput {
+    const latitudeDelta = radiusMeters / 111_320;
+    const cosine = Math.abs(Math.cos(latitude * Math.PI / 180));
+    const longitudeDelta = cosine < 0.01 ? undefined : radiusMeters / (111_320 * cosine);
+    return {
+      latitude: { gte: latitude - latitudeDelta, lte: latitude + latitudeDelta },
+      ...(longitudeDelta === undefined ? {} : { longitude: { gte: longitude - longitudeDelta, lte: longitude + longitudeDelta } }),
+    };
   }
 
   private distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
