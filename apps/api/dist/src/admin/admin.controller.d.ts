@@ -1,0 +1,486 @@
+import { MerchantStatus } from '@prisma/client';
+import type { AuthUser } from '../common/auth.types';
+import { AdminService } from './admin.service';
+import { BannerDto, CategoryDto, MerchantStatusDto, RejectMerchantDto, UserStatusDto } from './dto/admin.dto';
+export declare class AdminController {
+    private readonly admin;
+    constructor(admin: AdminService);
+    dashboard(): Promise<{
+        users: number;
+        merchants: number;
+        activeMerchants: number;
+        pendingMerchants: number;
+        conversations: number;
+        favorites: number;
+        merchantViews: number;
+        consultConversionRate: number;
+    }>;
+    users(): import(".prisma/client").Prisma.PrismaPromise<{
+        email: string | null;
+        phone: string | null;
+        nickname: string | null;
+        id: string;
+        role: import(".prisma/client").$Enums.UserRole;
+        status: import(".prisma/client").$Enums.UserStatus;
+        createdAt: Date;
+    }[]>;
+    userStatus(id: string, dto: UserStatusDto): import(".prisma/client").Prisma.Prisma__UserClient<{
+        email: string | null;
+        phone: string | null;
+        nickname: string | null;
+        avatarUrl: string | null;
+        id: string;
+        passwordHash: string;
+        refreshTokenHash: string | null;
+        locale: string;
+        role: import(".prisma/client").$Enums.UserRole;
+        status: import(".prisma/client").$Enums.UserStatus;
+        createdAt: Date;
+        updatedAt: Date;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs, import(".prisma/client").Prisma.PrismaClientOptions>;
+    merchants(status?: MerchantStatus): import(".prisma/client").Prisma.PrismaPromise<({
+        address: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            prefectureCode: string | null;
+            municipalityCode: string | null;
+            merchantId: string;
+            postalCode: string | null;
+            prefectureName: string | null;
+            municipalityName: string | null;
+            town: string | null;
+            chome: string | null;
+            block: string | null;
+            building: string | null;
+            room: string | null;
+            fullAddress: string;
+            latitude: import("@prisma/client/runtime/library").Decimal | null;
+            longitude: import("@prisma/client/runtime/library").Decimal | null;
+        } | null;
+        categories: ({
+            category: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                sort: number;
+                nameJa: string;
+                nameKana: string | null;
+                nameEn: string | null;
+                parentId: string | null;
+                icon: string | null;
+                enabled: boolean;
+            };
+        } & {
+            categoryId: string;
+            merchantId: string;
+        })[];
+        verifications: {
+            id: string;
+            status: import(".prisma/client").$Enums.VerificationStatus;
+            createdAt: Date;
+            merchantId: string;
+            entityType: import(".prisma/client").$Enums.EntityType;
+            representativeName: string | null;
+            corporateName: string | null;
+            corporateNumber: string | null;
+            invoiceRegistrationNumber: string | null;
+            documentUrls: import("@prisma/client/runtime/library").JsonValue | null;
+            rejectReason: string | null;
+            reviewedAt: Date | null;
+        }[];
+    } & {
+        email: string | null;
+        phone: string | null;
+        id: string;
+        status: import(".prisma/client").$Enums.MerchantStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        rating: import("@prisma/client/runtime/library").Decimal;
+        nameJa: string;
+        nameKana: string | null;
+        nameEn: string | null;
+        slug: string | null;
+        logoUrl: string | null;
+        coverUrl: string | null;
+        descriptionJa: string | null;
+        shortDescriptionJa: string | null;
+        website: string | null;
+        lineUrl: string | null;
+        instagramUrl: string | null;
+        reviewCount: number;
+        viewCount: number;
+        consultCount: number;
+        favoriteCount: number;
+    })[]>;
+    merchant(id: string): import(".prisma/client").Prisma.Prisma__MerchantClient<{
+        address: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            prefectureCode: string | null;
+            municipalityCode: string | null;
+            merchantId: string;
+            postalCode: string | null;
+            prefectureName: string | null;
+            municipalityName: string | null;
+            town: string | null;
+            chome: string | null;
+            block: string | null;
+            building: string | null;
+            room: string | null;
+            fullAddress: string;
+            latitude: import("@prisma/client/runtime/library").Decimal | null;
+            longitude: import("@prisma/client/runtime/library").Decimal | null;
+        } | null;
+        businessHours: {
+            id: string;
+            merchantId: string;
+            dayOfWeek: number;
+            isClosed: boolean;
+            openTime1: string | null;
+            closeTime1: string | null;
+            openTime2: string | null;
+            closeTime2: string | null;
+        }[];
+        categories: ({
+            category: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                sort: number;
+                nameJa: string;
+                nameKana: string | null;
+                nameEn: string | null;
+                parentId: string | null;
+                icon: string | null;
+                enabled: boolean;
+            };
+        } & {
+            categoryId: string;
+            merchantId: string;
+        })[];
+        members: ({
+            user: {
+                email: string | null;
+                phone: string | null;
+                nickname: string | null;
+                id: string;
+            };
+        } & {
+            id: string;
+            merchantId: string;
+            userId: string;
+            isOwner: boolean;
+        })[];
+        verifications: {
+            id: string;
+            status: import(".prisma/client").$Enums.VerificationStatus;
+            createdAt: Date;
+            merchantId: string;
+            entityType: import(".prisma/client").$Enums.EntityType;
+            representativeName: string | null;
+            corporateName: string | null;
+            corporateNumber: string | null;
+            invoiceRegistrationNumber: string | null;
+            documentUrls: import("@prisma/client/runtime/library").JsonValue | null;
+            rejectReason: string | null;
+            reviewedAt: Date | null;
+        }[];
+    } & {
+        email: string | null;
+        phone: string | null;
+        id: string;
+        status: import(".prisma/client").$Enums.MerchantStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        rating: import("@prisma/client/runtime/library").Decimal;
+        nameJa: string;
+        nameKana: string | null;
+        nameEn: string | null;
+        slug: string | null;
+        logoUrl: string | null;
+        coverUrl: string | null;
+        descriptionJa: string | null;
+        shortDescriptionJa: string | null;
+        website: string | null;
+        lineUrl: string | null;
+        instagramUrl: string | null;
+        reviewCount: number;
+        viewCount: number;
+        consultCount: number;
+        favoriteCount: number;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs, import(".prisma/client").Prisma.PrismaClientOptions>;
+    approve(user: AuthUser, id: string, ip: string): Promise<{
+        email: string | null;
+        phone: string | null;
+        id: string;
+        status: import(".prisma/client").$Enums.MerchantStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        rating: import("@prisma/client/runtime/library").Decimal;
+        nameJa: string;
+        nameKana: string | null;
+        nameEn: string | null;
+        slug: string | null;
+        logoUrl: string | null;
+        coverUrl: string | null;
+        descriptionJa: string | null;
+        shortDescriptionJa: string | null;
+        website: string | null;
+        lineUrl: string | null;
+        instagramUrl: string | null;
+        reviewCount: number;
+        viewCount: number;
+        consultCount: number;
+        favoriteCount: number;
+    }>;
+    reject(user: AuthUser, id: string, dto: RejectMerchantDto, ip: string): Promise<{
+        email: string | null;
+        phone: string | null;
+        id: string;
+        status: import(".prisma/client").$Enums.MerchantStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        rating: import("@prisma/client/runtime/library").Decimal;
+        nameJa: string;
+        nameKana: string | null;
+        nameEn: string | null;
+        slug: string | null;
+        logoUrl: string | null;
+        coverUrl: string | null;
+        descriptionJa: string | null;
+        shortDescriptionJa: string | null;
+        website: string | null;
+        lineUrl: string | null;
+        instagramUrl: string | null;
+        reviewCount: number;
+        viewCount: number;
+        consultCount: number;
+        favoriteCount: number;
+    }>;
+    status(user: AuthUser, id: string, dto: MerchantStatusDto, ip: string): Promise<{
+        email: string | null;
+        phone: string | null;
+        id: string;
+        status: import(".prisma/client").$Enums.MerchantStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        rating: import("@prisma/client/runtime/library").Decimal;
+        nameJa: string;
+        nameKana: string | null;
+        nameEn: string | null;
+        slug: string | null;
+        logoUrl: string | null;
+        coverUrl: string | null;
+        descriptionJa: string | null;
+        shortDescriptionJa: string | null;
+        website: string | null;
+        lineUrl: string | null;
+        instagramUrl: string | null;
+        reviewCount: number;
+        viewCount: number;
+        consultCount: number;
+        favoriteCount: number;
+    }>;
+    categories(): import(".prisma/client").Prisma.PrismaPromise<({
+        parent: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            sort: number;
+            nameJa: string;
+            nameKana: string | null;
+            nameEn: string | null;
+            parentId: string | null;
+            icon: string | null;
+            enabled: boolean;
+        } | null;
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        sort: number;
+        nameJa: string;
+        nameKana: string | null;
+        nameEn: string | null;
+        parentId: string | null;
+        icon: string | null;
+        enabled: boolean;
+    })[]>;
+    createCategory(dto: CategoryDto): import(".prisma/client").Prisma.Prisma__CategoryClient<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        sort: number;
+        nameJa: string;
+        nameKana: string | null;
+        nameEn: string | null;
+        parentId: string | null;
+        icon: string | null;
+        enabled: boolean;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs, import(".prisma/client").Prisma.PrismaClientOptions>;
+    updateCategory(id: string, dto: CategoryDto): import(".prisma/client").Prisma.Prisma__CategoryClient<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        sort: number;
+        nameJa: string;
+        nameKana: string | null;
+        nameEn: string | null;
+        parentId: string | null;
+        icon: string | null;
+        enabled: boolean;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs, import(".prisma/client").Prisma.PrismaClientOptions>;
+    deleteCategory(id: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        sort: number;
+        nameJa: string;
+        nameKana: string | null;
+        nameEn: string | null;
+        parentId: string | null;
+        icon: string | null;
+        enabled: boolean;
+    }>;
+    banners(): import(".prisma/client").Prisma.PrismaPromise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        sort: number;
+        enabled: boolean;
+        title: string;
+        imageUrl: string;
+        linkUrl: string | null;
+        startsAt: Date | null;
+        endsAt: Date | null;
+    }[]>;
+    services(): import(".prisma/client").Prisma.PrismaPromise<({
+        category: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            sort: number;
+            nameJa: string;
+            nameKana: string | null;
+            nameEn: string | null;
+            parentId: string | null;
+            icon: string | null;
+            enabled: boolean;
+        } | null;
+        merchant: {
+            id: string;
+            nameJa: string;
+        };
+    } & {
+        id: string;
+        status: import(".prisma/client").$Enums.ContentStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        categoryId: string | null;
+        sort: number;
+        nameJa: string;
+        nameKana: string | null;
+        coverUrl: string | null;
+        descriptionJa: string | null;
+        viewCount: number;
+        merchantId: string;
+        summaryJa: string | null;
+        priceType: import(".prisma/client").$Enums.PriceType;
+        priceMin: number | null;
+        priceMax: number | null;
+        unit: string | null;
+        taxIncluded: boolean;
+    })[]>;
+    products(): import(".prisma/client").Prisma.PrismaPromise<({
+        category: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            sort: number;
+            nameJa: string;
+            nameKana: string | null;
+            nameEn: string | null;
+            parentId: string | null;
+            icon: string | null;
+            enabled: boolean;
+        } | null;
+        merchant: {
+            id: string;
+            nameJa: string;
+        };
+    } & {
+        id: string;
+        status: import(".prisma/client").$Enums.ContentStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        categoryId: string | null;
+        nameJa: string;
+        coverUrl: string | null;
+        descriptionJa: string | null;
+        viewCount: number;
+        merchantId: string;
+        summaryJa: string | null;
+        unit: string | null;
+        taxIncluded: boolean;
+        price: number | null;
+        originalPrice: number | null;
+        stock: number | null;
+        attributes: import("@prisma/client/runtime/library").JsonValue | null;
+    })[]>;
+    media(): import(".prisma/client").Prisma.PrismaPromise<({
+        merchant: {
+            id: string;
+            nameJa: string;
+        } | null;
+    } & {
+        id: string;
+        createdAt: Date;
+        sort: number;
+        merchantId: string | null;
+        bizType: import(".prisma/client").$Enums.MediaBizType;
+        bizId: string;
+        mediaType: import(".prisma/client").$Enums.MediaType;
+        url: string;
+        thumbnailUrl: string | null;
+        mimeType: string | null;
+        size: number | null;
+    })[]>;
+    createBanner(dto: BannerDto): import(".prisma/client").Prisma.Prisma__BannerClient<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        sort: number;
+        enabled: boolean;
+        title: string;
+        imageUrl: string;
+        linkUrl: string | null;
+        startsAt: Date | null;
+        endsAt: Date | null;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs, import(".prisma/client").Prisma.PrismaClientOptions>;
+    updateBanner(id: string, dto: BannerDto): import(".prisma/client").Prisma.Prisma__BannerClient<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        sort: number;
+        enabled: boolean;
+        title: string;
+        imageUrl: string;
+        linkUrl: string | null;
+        startsAt: Date | null;
+        endsAt: Date | null;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs, import(".prisma/client").Prisma.PrismaClientOptions>;
+    deleteBanner(id: string): import(".prisma/client").Prisma.Prisma__BannerClient<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        sort: number;
+        enabled: boolean;
+        title: string;
+        imageUrl: string;
+        linkUrl: string | null;
+        startsAt: Date | null;
+        endsAt: Date | null;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs, import(".prisma/client").Prisma.PrismaClientOptions>;
+}
