@@ -52,6 +52,7 @@ sudo DB_NAME=machi_service DB_USER=machi_service DB_PASSWORD="${DB_PASSWORD}" \
 ```
 
 脚本可重复运行，会创建/更新仅限本机连接的 MariaDB 账号和使用 `utf8mb4_unicode_ci` 的数据库。
+如果 MariaDB 的 `root` 数据库账号已经设置密码，在命令中额外传入 `MYSQL_ROOT_PASSWORD`。
 
 ## 4. 配置生产环境
 

@@ -24,7 +24,11 @@ if [[ ! "${DB_PASSWORD}" =~ ^[A-Za-z0-9_-]+$ ]]; then
   exit 1
 fi
 
-mysql --protocol=socket --user=root <<SQL
+mysql_args=(--protocol=socket --user=root)
+if [[ -n "${MYSQL_ROOT_PASSWORD:-}" ]]; then
+  export MYSQL_PWD="${MYSQL_ROOT_PASSWORD}"
+fi
+mysql "${mysql_args[@]}" <<SQL
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASSWORD}';
 CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
@@ -34,4 +38,5 @@ GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
 SQL
+unset MYSQL_PWD
 echo "数据库 ${DB_NAME} 及账号 ${DB_USER} 已就绪。"
