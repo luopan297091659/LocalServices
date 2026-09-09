@@ -27,7 +27,7 @@ case "$(uname -m)" in
   *) echo "不支持的 CPU 架构：$(uname -m)" >&2; exit 1 ;;
 esac
 
-node_index_url="https://nodejs.org/dist/latest-v18.x"
+node_index_url="https://nodejs.org/dist/latest-v22.x"
 temp_dir="$(mktemp -d)"
 trap 'rm -rf -- "$temp_dir"' EXIT
 curl --fail --silent --show-error --location "${node_index_url}/SHASUMS256.txt" --output "${temp_dir}/SHASUMS256.txt"
