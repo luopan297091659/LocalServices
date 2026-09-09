@@ -28,7 +28,7 @@ Internet -> kotabi.top 的现有 Nginx (:80/:443)
 sudo bash deploy/rocky/install-system-dependencies.sh
 ```
 
-脚本会安装 MariaDB、Redis、Nginx、Node.js 22、npm，创建低权限账号 `machi-service`，启用服务并配置必要的 SELinux 网络权限。Node.js 安装包在解压前会校验官方 SHA-256 清单。
+脚本会安装 MariaDB、Redis、Nginx、Node.js 18.20.8、npm，创建低权限账号 `machi-service`，启用服务并配置必要的 SELinux 网络权限。Node.js 安装包在解压前会校验官方 SHA-256 清单。
 
 ### 使用 PM2 管理 API（可选）
 

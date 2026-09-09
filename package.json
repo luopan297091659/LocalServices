@@ -3,13 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.19"
+    "node": ">=18.18 <19"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "packageManager": "npm@10.8.2",
+  "overrides": {
+    "rollup": "4.34.8",
+    "unrs-resolver": "1.7.11"
+  },
+  "devDependencies": {
+    "rollup": "4.34.8",
+    "unrs-resolver": "1.7.11"
+  },
   "scripts": {
     "dev": "npm run dev --workspaces --if-present --parallel",
     "dev:web": "npm run dev --workspace=@local/web-client",
