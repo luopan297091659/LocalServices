@@ -9,7 +9,7 @@
     "apps/*",
     "packages/*"
   ],
-  "packageManager": "npm@10.8.2",
+  "packageManager": "npm@11.19.0",
   "overrides": {
     "rollup": "4.34.8",
     "unrs-resolver": "1.7.11"
