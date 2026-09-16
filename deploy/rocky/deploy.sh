@@ -38,15 +38,46 @@ release_id="$(date -u +%Y%m%dT%H%M%SZ)"
 app_root="/opt/machi-service"
 release_dir="${app_root}/releases/${release_id}"
 previous_target="$(readlink -f "${app_root}/current" 2>/dev/null || true)"
+npm_cache_dir="/var/lib/machi-service/npm-cache"
 
 install -d -o machi-service -g machi-service -m 0750 "${release_dir}"
+install -d -o machi-service -g machi-service -m 0750 "${npm_cache_dir}"
 rsync -a --delete \
   --exclude=.git --exclude=node_modules --exclude=dist --exclude=.env --exclude=uploads \
   "${source_dir}/" "${release_dir}/"
 chown -R machi-service:machi-service "${release_dir}"
 
-clean_env=(env -i HOME=/var/lib/machi-service PATH=/usr/local/bin:/usr/bin:/bin)
-runuser -u machi-service -- "${clean_env[@]}" bash -c "cd '${release_dir}' && npm ci --include=dev"
+# Keep npm's downloaded tarballs outside release directories.  More importantly,
+# when the lockfile and Node/npm versions have not changed, clone the previous
+# release's dependency tree with copy-on-write (XFS on Rocky 9 supports this).
+# A reflink clone keeps releases independent for rollback while avoiding the
+# full read/write amplification of another `npm ci`.
+clean_env=(env -i HOME=/var/lib/machi-service PATH=/usr/local/bin:/usr/bin:/bin \
+  NPM_CONFIG_CACHE="${npm_cache_dir}" NPM_CONFIG_PREFER_OFFLINE=true \
+  NPM_CONFIG_AUDIT=false NPM_CONFIG_FUND=false NPM_CONFIG_UPDATE_NOTIFIER=false)
+toolchain_version="$("${clean_env[@]}" bash -c 'node --version; npm --version')"
+dependencies_reused=false
+if [[ -n "${previous_target}" && -d "${previous_target}/node_modules" && \
+  -f "${previous_target}/package-lock.json" && -f "${previous_target}/.npm-toolchain" ]] && \
+  cmp -s "${release_dir}/package-lock.json" "${previous_target}/package-lock.json" && \
+  [[ "$(<"${previous_target}/.npm-toolchain")" == "${toolchain_version}" ]]; then
+  if runuser -u machi-service -- "${clean_env[@]}" cp -a --reflink=always -- \
+    "${previous_target}/node_modules" "${release_dir}/node_modules"; then
+    dependencies_reused=true
+    echo "依赖未变：已通过 CoW reflink 复用上一版本的 node_modules。"
+  else
+    # A partial clone can remain on filesystems without reflink support.
+    rm -rf -- "${release_dir}/node_modules"
+    echo "当前文件系统不支持 CoW reflink，回退到 npm ci。" >&2
+  fi
+fi
+
+if [[ "${dependencies_reused}" != true ]]; then
+  echo "依赖或 Node/npm 版本已变更：执行 npm ci（使用持久化 npm 缓存）。"
+  runuser -u machi-service -- "${clean_env[@]}" bash -c "cd '${release_dir}' && npm ci --include=dev"
+fi
+printf '%s\n' "${toolchain_version}" > "${release_dir}/.npm-toolchain"
+chown machi-service:machi-service "${release_dir}/.npm-toolchain"
 runuser -u machi-service -- "${clean_env[@]}" DATABASE_URL=mysql://unused:unused@127.0.0.1:3306/unused \
   VITE_PUBLIC_PATH="${public_path}" VITE_API_URL="${public_path}/api/v1" \
   bash -c "cd '${release_dir}' && npm run db:generate && npm run build"

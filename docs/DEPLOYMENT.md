@@ -92,7 +92,7 @@ sudo bash deploy/rocky/deploy.sh "$(pwd)"
 每次运行都会：
 
 1. 复制源码到带 UTC 时间戳的 release 目录。
-2. 使用锁文件安装依赖并构建 API 和三个前端。
+2. 首次发布、依赖锁文件或 Node/npm 版本变化时，使用锁文件安装依赖；其他发布会通过 CoW reflink 克隆上一版本依赖并构建 API 和三个前端，避免重复 `npm ci` 的大量磁盘 I/O。
 3. 执行 `prisma migrate deploy`。
 4. 幂等写入都道府县、地区和分类参考数据；不会创建演示账号。
 5. 安装 Nginx、每日备份定时器，以及所选的 API 进程管理配置（systemd 或 PM2）。
@@ -174,8 +174,11 @@ sudo -u machi-service env HOME=/var/lib/machi-service PATH=/usr/local/bin:/usr/b
 /opt/machi-service/current                当前版本软链接（含 public-root/local-services 静态站点）
 /etc/machi-service/api.env                生产密钥（0640）
 /var/lib/machi-service/uploads            上传文件
+/var/lib/machi-service/npm-cache          npm 下载缓存（跨 release 复用）
 /var/backups/machi-service                MariaDB gzip 压缩 SQL 备份
 ```
+
+Rocky 9 默认 XFS 支持 CoW reflink，因此锁文件未变的发布不会重新安装全部依赖，且每个 release 的依赖仍保持独立，可安全回滚。若部署目录所在文件系统不支持 reflink，脚本会自动回退到 `npm ci`，不会牺牲发布正确性；此时可将 `/opt/machi-service` 放在启用 reflink 的 XFS 文件系统上以获得优化效果。
 
 ## 6. 启用 HTTPS
 

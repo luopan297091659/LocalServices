@@ -57,6 +57,7 @@ usermod -a -G machi-service nginx
 
 install -d -o machi-service -g machi-service -m 0750 /opt/machi-service/releases
 install -d -o machi-service -g machi-service -m 0750 /var/lib/machi-service
+install -d -o machi-service -g machi-service -m 0750 /var/lib/machi-service/npm-cache
 install -d -o machi-service -g machi-service -m 0750 /var/lib/machi-service/uploads
 install -d -o root -g machi-service -m 0750 /etc/machi-service
 
